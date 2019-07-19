@@ -1,0 +1,28 @@
+include "Common.fbs";
+
+table CSLogin {
+	AccountID: string;
+	DeviceUUID: string;
+	AccessToken: string;
+}
+
+table SCLogin {
+	ErrorCode: CommonErrorCode;
+}
+
+table CSLogout {
+	
+}
+
+table SCLogout {
+	ErrorCode: CommonErrorCode;
+}
+
+table CSEnterMap {
+	MapID: int32;
+}
+
+table SCEnterMap {
+	MapID: int32;
+	ErrorCode: CommonErrorCode;
+}

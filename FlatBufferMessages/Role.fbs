@@ -1,0 +1,14 @@
+include "Common.fbs";
+
+table CSCreateRole {
+	NickName: string;
+	Gender: RoleGender;
+	Clothes: [int32];
+}
+
+table SCCreateRole {
+	ErrorCode: CommonErrorCode;
+	NickName: string;
+	UID: string;
+	Clothes: [int32];
+}

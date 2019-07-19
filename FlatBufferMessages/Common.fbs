@@ -1,0 +1,12 @@
+enum CommonErrorCode: byte {
+	Success,
+	LogicError,
+	MsgError,
+	JsonError,
+	BodyError,
+}
+
+enum RoleGender: byte {
+	Male,
+	Female,
+}
