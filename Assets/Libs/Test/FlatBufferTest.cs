@@ -23,4 +23,22 @@ public class FlatBufferTest : MonoBehaviour
 
         // Send data to network
     }
+
+    /// <summary>
+    /// 假设这里收到了服务器的数据
+    /// </summary>
+    /// <param name="data"></param>
+    private void ProcessLoginMsg(byte[] data)
+    {
+        ByteBuffer bb = new ByteBuffer(data);
+        SCLogin resp = SCLogin.GetRootAsSCLogin(bb);
+        if(resp.ErrorCode == CommonErrorCode.Success)
+        {
+            string uid = resp.UID;
+        }
+        else
+        {
+            Debug.LogErrorFormat("Login Error: {0}", resp.ErrorCode);
+        }
+    }
 }

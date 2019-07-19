@@ -67,16 +67,26 @@ public struct SCLogin : IFlatbufferObject
   public SCLogin __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public CommonErrorCode ErrorCode { get { int o = __p.__offset(4); return o != 0 ? (CommonErrorCode)__p.bb.GetSbyte(o + __p.bb_pos) : CommonErrorCode.Success; } }
+  public string UID { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+#if ENABLE_SPAN_T
+  public Span<byte> GetUIDBytes() { return __p.__vector_as_span(6); }
+#else
+  public ArraySegment<byte>? GetUIDBytes() { return __p.__vector_as_arraysegment(6); }
+#endif
+  public byte[] GetUIDArray() { return __p.__vector_as_array<byte>(6); }
 
   public static Offset<SCLogin> CreateSCLogin(FlatBufferBuilder builder,
-      CommonErrorCode ErrorCode = CommonErrorCode.Success) {
-    builder.StartObject(1);
+      CommonErrorCode ErrorCode = CommonErrorCode.Success,
+      StringOffset UIDOffset = default(StringOffset)) {
+    builder.StartObject(2);
+    SCLogin.AddUID(builder, UIDOffset);
     SCLogin.AddErrorCode(builder, ErrorCode);
     return SCLogin.EndSCLogin(builder);
   }
 
-  public static void StartSCLogin(FlatBufferBuilder builder) { builder.StartObject(1); }
+  public static void StartSCLogin(FlatBufferBuilder builder) { builder.StartObject(2); }
   public static void AddErrorCode(FlatBufferBuilder builder, CommonErrorCode ErrorCode) { builder.AddSbyte(0, (sbyte)ErrorCode, 0); }
+  public static void AddUID(FlatBufferBuilder builder, StringOffset UIDOffset) { builder.AddOffset(1, UIDOffset.Value, 0); }
   public static Offset<SCLogin> EndSCLogin(FlatBufferBuilder builder) {
     int o = builder.EndObject();
     return new Offset<SCLogin>(o);
