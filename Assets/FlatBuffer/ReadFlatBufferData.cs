@@ -20,17 +20,18 @@ public class ReadFlatBufferData : MonoBehaviour
 
         //Debug.LogFormat("Name: {0}, HP: {1}, Attack: {2}", name, hp, attack);
 
-        string filePath = Application.dataPath + "/Config/music.bytes";
-        byte[] buffer = File.ReadAllBytes(filePath);
+        //string filePath = Application.dataPath + "/Config/music.bytes";
+        //byte[] buffer = File.ReadAllBytes(filePath);
 
-        ByteBuffer bb = new ByteBuffer(buffer);
-        TShowMusicsConfig config = TShowMusicsConfig.GetRootAsTShowMusicsConfig(bb);
-        for (int i = 0; i < config.DatalistLength; ++i)
-        {
-            TShowMusicsConfigRowData data = config.Datalist(i).Value;
-            Debug.LogFormat("ID: {0}  Name: {1}  BGM: {2}  Time: {3}", data.ID, data.NoteName, data.BGMName, data.TotalTime);
-        }
-
+        //ByteBuffer bb = new ByteBuffer(buffer);
+        //TShowMusicsConfig config = TShowMusicsConfig.GetRootAsTShowMusicsConfig(bb);
+        //for (int i = 0; i < config.DatalistLength; ++i)
+        //{
+        //    TShowMusicsConfigRowData data = config.Datalist(i).Value;
+        //    Debug.LogFormat("ID: {0}  Name: {1}  BGM: {2}  Time: {3}", data.ID, data.NoteName, data.BGMName, data.TotalTime);
+        //}
+        int num = DanceMusicConfigSets.Inst.GetNum();
+        Debug.Log(num);
     }
 
     // Update is called once per frame
