@@ -294,7 +294,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridSize: 0.5
   refTrans: {fileID: 0}
-  renderCount: 10
+  renderCount: 50
   startPos: {x: 0, y: 0, z: 0}
   lineSample: {fileID: 5158362519099702348, guid: cc122fbd301287a489fa9299789808bf,
     type: 3}
