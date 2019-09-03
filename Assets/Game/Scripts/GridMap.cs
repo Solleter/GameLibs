@@ -4,30 +4,68 @@ using UnityEngine;
 
 public class GridMap : MonoBehaviour
 {
-    struct LineData
+    struct GridLine
     {
         public int id;
         public int x;
         public int y;
-        public Vector3 pos;
-        public GameObject lineObj;
+        public GameObject hLineObj;
+        public GameObject vLineObj;
 
-        public LineData(int id, int x, int y, Vector3 pos, GameObject lineObj)
+        private float gridSize;
+        private float halfGridSize;
+        private Vector3 gridPos;
+        private float lineWidth;
+
+        private SpriteRenderer hLineRender;
+        private SpriteRenderer vLineRender;
+
+        public GridLine(GameObject hLineObj, GameObject vLineObj, float lineWidth)
+        {
+            this.id = 0;
+            this.x = 0;
+            this.y = 0;
+            this.hLineObj = hLineObj;
+            this.vLineObj = vLineObj;
+            this.lineWidth = lineWidth;
+            this.gridSize = 0.0f;
+            this.halfGridSize = 0.0f;
+            this.gridPos = Vector3.zero;
+            this.hLineRender = this.hLineObj.GetComponent<SpriteRenderer>();
+            this.vLineRender = this.vLineObj.GetComponent<SpriteRenderer>();
+        }
+
+        public void InitData(int id, int x, int y, float gridSize)
         {
             this.id = id;
             this.x = x;
             this.y = y;
-            this.pos = pos;
-            this.lineObj = lineObj;
+            this.gridSize = gridSize;
+            this.halfGridSize = this.gridSize / 2.0f;
+        }
+
+        public void ResetLine()
+        {
+            // 计算位置，然后重置Line
+            this.gridPos = new Vector3(this.x * this.gridSize, this.y * this.gridSize, 0);
+            Vector3 linePos = this.gridPos - new Vector3(this.halfGridSize, this.halfGridSize, 0);
+            this.hLineObj.transform.position = linePos;
+            this.vLineObj.transform.position = linePos;
+            Vector2 hLineScale = new Vector2(10000, this.lineWidth);
+            Vector2 vLineScale = new Vector2(this.lineWidth, 10000);
+            this.hLineRender.size = hLineScale;
+            this.vLineRender.size = vLineScale;
+        }
+
+
+        public void SetActive(bool isActive)
+        {
+            this.hLineObj.SetActive(isActive);
+            this.vLineObj.SetActive(isActive);
         }
     }
 
-    enum En_LineType
-    {
-        Horizontal,
-        Verticle,
-    }
-
+   
     public float gridSize = 0.5f;
     public Transform refTrans;
     public int renderCount = 10;
@@ -35,8 +73,7 @@ public class GridMap : MonoBehaviour
     public GameObject lineSample;
     public float lineWidth = 0.05f;
 
-    private const int MagicID = 10000;
-    private const int VMagicOffset = 200000;
+    private const int MagicID = 1000000;
 
     private int refX = 0;
     private int refY = 0;
@@ -44,10 +81,7 @@ public class GridMap : MonoBehaviour
     private int lastRefY = -1;
     private bool isDirty = false;
 
-    /// <summary>
-    /// 当前已经显示的线 ID-LineData
-    /// </summary>
-    private Dictionary<int, LineData> renderedDict = new Dictionary<int, LineData>();
+    private Dictionary<int, GridLine> renderedDict = new Dictionary<int, GridLine>();
 
     /// <summary>
     /// 已经显示的ID字典 ID-0
@@ -59,14 +93,11 @@ public class GridMap : MonoBehaviour
     /// </summary>
     private Dictionary<int, int> needRenderIDDict = new Dictionary<int, int>();
 
-    private Queue<GameObject> pool = new Queue<GameObject>();
+    private Queue<GridLine> pool = new Queue<GridLine>();
 
     private void Start()
     {
-        //int x = 0, y = 0;
-        //CalculateGridCenterPos(x, y);
-        //Vector3 centerPos = CalculateGridCenterPos(x, y);
-        //ShowLine(centerPos);
+
     }
 
     private void LateUpdate()
@@ -106,31 +137,30 @@ public class GridMap : MonoBehaviour
 
         x = (int)(xDiff / gridSize);
         y = (int)(yDiff / gridSize);
+
+        x = Mathf.Clamp(x, 0, x);
+        y = Mathf.Clamp(y, 0, y);
     }
 
     private void ConstructNeedRenderLine(int startX, int startY)
     {
         needRenderIDDict.Clear();
-        // 横线
-        int startHLineId = GetLineID(startX, startY, En_LineType.Horizontal);
-        needRenderIDDict.Add(startHLineId, 0);
-        for(int i = 1; i <= renderCount; ++i)
-        {
-            int upHLineId = GetLineID(startX, startY + i, En_LineType.Horizontal);
-            int downHLineId = GetLineID(startX, startY - i, En_LineType.Horizontal);
-            needRenderIDDict.Add(upHLineId, 0);
-            needRenderIDDict.Add(downHLineId, 0);
-        }
+        int lineId = GetLineID(startX, startY);
+        needRenderIDDict.Add(lineId, 0);
+        //for (int i = 1; i <= 10; ++i)
+        //{
+        //    int x = startX + i;
+        //    int y = startY + i;
+        //    lineId = GetLineID(x, y);
+        //    needRenderIDDict.Add(lineId, 0);
 
-        int startVLineId = GetLineID(startX, startY, En_LineType.Verticle);
-        needRenderIDDict.Add(startVLineId, 0);
-        for(int i = 1; i < renderCount; ++i)
-        {
-            int leftVLineId = GetLineID(startX - i, startY, En_LineType.Verticle);
-            int rightVLineId = GetLineID(startX + i, startY, En_LineType.Verticle);
-            needRenderIDDict.Add(leftVLineId, 0);
-            needRenderIDDict.Add(rightVLineId, 0);
-        }
+        //    x = startX - i;
+        //    y = startY - i;
+        //    if (x >= 0 && y >= 0) {
+        //        lineId = GetLineID(x, y);
+        //        needRenderIDDict.Add(x, y);
+        //    }
+        //}
     }
 
     private void CacheUnRenderLine()
@@ -141,10 +171,10 @@ public class GridMap : MonoBehaviour
             int lineId = enumer.Current.Key;
             if(needRenderIDDict.ContainsKey(lineId) == false)
             {
-                LineData lineData;
-                renderedDict.TryGetValue(lineId, out lineData);
+                GridLine gridLine;
+                renderedDict.TryGetValue(lineId, out gridLine);
                 renderedDict.Remove(lineId);
-                CacheLine(lineData);
+                CacheLine(gridLine);
             }
         }
         renderedIDDict.Clear();
@@ -159,56 +189,43 @@ public class GridMap : MonoBehaviour
             renderedIDDict.Add(lineId, 0);
             if(renderedDict.ContainsKey(lineId) == false)
             {
-                LineData lineData = RenderOneLine(lineId);
+                GridLine lineData = RenderOneLine(lineId);
                 renderedDict.Add(lineId, lineData);
             }
         }
     }
 
-    private LineData RenderOneLine(int lineId)
+    private GridLine RenderOneLine(int lineId)
     {
+        GridLine line = GetNewLine();
         int x = 0, y = 0;
-        En_LineType lineType;
-        GetLineIndex(lineId, out x, out y, out lineType);
-        Vector3 linePos = new Vector3(x * gridSize, y * gridSize, 0);
-        Vector3 size;
-        if(lineType == En_LineType.Horizontal)
-        {
-            size = new Vector3(renderCount * gridSize * 2, lineWidth);
-        }
-        else
-        {
-            size = new Vector3(lineWidth, renderCount * gridSize * 2);
-        }
+        GetGridXY(lineId, out x, out y);
+        line.InitData(lineId, x, y, gridSize);
+        line.SetActive(true);
+        line.ResetLine();
 
-        GameObject lineObj = GetNewLine();
-        lineObj.GetComponent<SpriteRenderer>().size = size;
-        lineObj.transform.position = linePos;
-
-        LineData lineData = new LineData(lineId, x, y, linePos, lineObj);
-        return lineData;
+        return line;
     }
 
-    private GameObject GetNewLine()
+    private GridLine GetNewLine()
     {
-        GameObject lineObj = null;
         if(pool.Count > 0)
         {
-            lineObj = pool.Dequeue();
+            return pool.Dequeue();
         }
         else
         {
-            lineObj = Instantiate(lineSample);
+            GameObject line1 = Instantiate(lineSample);
+            GameObject line2 = Instantiate(lineSample);
+            GridLine line = new GridLine(line1, line2, lineWidth);
+            return line;
         }
-        lineObj.SetActive(true);
-        return lineObj;
     }
 
-    private void CacheLine(LineData lineData)
+    private void CacheLine(GridLine lineData)
     {
-        GameObject lineObj = lineData.lineObj;
-        lineObj.SetActive(false);
-        pool.Enqueue(lineObj);
+        lineData.SetActive(false);
+        pool.Enqueue(lineData);
     }
 
     private Vector3 CalculateGridCenterPos(int x, int y)
@@ -216,69 +233,22 @@ public class GridMap : MonoBehaviour
         return new Vector3(x * gridSize, y * gridSize, 0);
     }
 
-    //private void ShowLine(Vector3 startPos)
-    //{
-    //    // 画横线
-    //    Vector3 size = new Vector3(renderCount * gridSize * 2, lineWidth);
-    //    GameObject hLine = GetNewLine();
-    //    hLine.GetComponent<SpriteRenderer>().size = size;
-    //    hLine.transform.position = startPos;
-    //    for(int i = 1; i <= renderCount; ++i)
-    //    {
-    //        Vector3 upLinePos = startPos + new Vector3(0, i * gridSize);
-    //        Vector3 downLinePos = startPos + new Vector3(0, -i * gridSize);
-    //        GameObject upLine = GetNewLine();
-    //        GameObject downLine = GetNewLine();
-    //        upLine.GetComponent<SpriteRenderer>().size = size;
-    //        downLine.GetComponent<SpriteRenderer>().size = size;
-    //        upLine.transform.position = upLinePos;
-    //        downLine.transform.position = downLinePos;
-    //    }
 
-    //    // 画竖线
-    //    size = new Vector3(lineWidth, renderCount * gridSize * 2);
-    //    GameObject vLine = GetNewLine();
-    //    vLine.GetComponent<SpriteRenderer>().size = size;
-    //    vLine.transform.position = startPos;
-    //    for(int i = 1; i < renderCount; ++i)
-    //    {
-    //        Vector3 leftLinePos = startPos + new Vector3(-i * gridSize, 0);
-    //        Vector3 rightLinePos = startPos + new Vector3(i * gridSize, 0);
-    //        GameObject leftLine = GetNewLine();
-    //        GameObject rightLine = GetNewLine();
-    //        leftLine.GetComponent<SpriteRenderer>().size = size;
-    //        rightLine.GetComponent<SpriteRenderer>().size = size;
-    //        leftLine.transform.position = leftLinePos;
-    //        rightLine.transform.position = rightLinePos;
-    //    }
-    //}
-
-    
-
-    private int GetLineID(int x, int y, En_LineType lineType)
+    private int GetLineID(int x, int y)
     {
-        if (lineType == En_LineType.Horizontal)
-        {
-            return x * MagicID + y;
-        }
-        else
-        {
-            return x * MagicID + y + VMagicOffset;
-        }
+        return x * 1000000 + y;
     }
 
-    private void GetLineIndex(int lineId, out int x, out int y, out En_LineType lineType)
+    private void GetGridXY(int lineId, out int x, out int y)
     {
-        lineType = En_LineType.Horizontal;
-        if(lineId >= VMagicOffset)
-        {
-            lineType = En_LineType.Verticle;
-            lineId -= VMagicOffset;
-        }
-
-         x = (int)(lineId / MagicID);
-         y = lineId % MagicID;
+        x = (int)(lineId / 1000000);
+        y = lineId % 1000000;
     }
 
+
+    private void OnGUI()
+    {
+        GUILayout.Label(string.Format("RefX: {0}  RefY: {1}", refX, refY));
+    }
 
 }
