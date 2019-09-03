@@ -45,3 +45,9 @@ TagManager:
   - name: UI
     uniqueID: 398081333
     locked: 0
+  - name: Map
+    uniqueID: 1032347541
+    locked: 0
+  - name: Character
+    uniqueID: 3068731027
+    locked: 0

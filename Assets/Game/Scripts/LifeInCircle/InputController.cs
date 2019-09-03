@@ -12,9 +12,10 @@ namespace LifeInCircle.GameLogic
 
         private void Update()
         {
-            ProcessKeyboardInput();
+            ProcessAxis();
+            //ProcessKeyboardInput();
             agent.DoMove(moveVector);
-            agent.DoRotate(forwardVector);
+            //agent.DoRotate(forwardVector);
         }
 
         private void ProcessKeyboardInput()
@@ -79,8 +80,20 @@ namespace LifeInCircle.GameLogic
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(mousePos);
             //forwardVector = (mousePos - screenPos).normalized;
             #endregion
-
-
         }
+
+        private void ProcessAxis()
+        {
+            float acceleration = 2.0f;
+            float x = Input.GetAxis("Horizontal") * acceleration;
+            float y = Input.GetAxis("Vertical") * acceleration;
+            x = Mathf.Clamp(x, -1.0f, 1.0f);
+            y = Mathf.Clamp(y, -1.0f, 1.0f);
+
+            moveVector.x = x;
+            moveVector.y = y;
+        }
+
+
     }
 }

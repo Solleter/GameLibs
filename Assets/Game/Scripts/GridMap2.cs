@@ -29,6 +29,7 @@ public class GridMap2 : MonoBehaviour
 
     private void Start()
     {
+        OnDebugInit();
         UpdateGrid();
     }
 
@@ -176,17 +177,26 @@ public class GridMap2 : MonoBehaviour
         else
         {
             obj = Instantiate(lineUnit);
+            obj.transform.SetParent(transform);
         }
 
         return obj;
 
     }
 
+    private GUIStyle guiStyle;
 
-    private void OnGUI()
+    private void OnDebugInit()
     {
-        GUILayout.Label(string.Format("RefX: {0}  RefY: {1}", refX, refY));
+        guiStyle = new GUIStyle();
+        guiStyle.fontSize = 20;
+        GUIUtil.Inst.AddCall(this.DrawGUI);
     }
 
+
+    private void DrawGUI()
+    {
+        GUILayout.Label(string.Format("RefX: {0}  RefY: {1}", refX, refY), guiStyle);
+    }
 
 }

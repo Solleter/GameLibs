@@ -4,20 +4,49 @@ using UnityEngine;
 
 namespace LifeInCircle.GameLogic
 {
+    public enum EN_CharacterState
+    {
+        Stay,
+        Moving,
+    }
+
     public class CharacterAgent : MonoBehaviour
     {
+        public bool IsLocalPlayer;
         public float moveSpeed = 1.0f;
 
         private Transform trans;
 
+        private Vector3 rightScale = new Vector3(-1, 1, 1);
+        private Vector3 leftScale = new Vector3(1, 1, 1);
+        private Vector3 stay = Vector3.zero;
+
+        private EN_CharacterState state;
+
+        private Vector3 debug_moveVector;
+
         private void Awake()
         {
             trans = transform;
+            state = EN_CharacterState.Stay;
         }
 
-        public void DoMove(Vector3 moveStep)
+        private void Start()
         {
-            trans.position += moveStep * moveSpeed * Time.deltaTime;
+            OnDebugInit();
+        }
+
+        public void DoMove(Vector3 normMoveVector)
+        {
+            debug_moveVector = normMoveVector;
+            if(normMoveVector == stay)
+            {
+                state = EN_CharacterState.Stay;
+                return;
+            }
+            state = EN_CharacterState.Moving;
+            UpdateCharacterView(normMoveVector);
+            trans.position += normMoveVector * moveSpeed * Time.deltaTime;
         }
 
         public void DoRotate(Vector3 forward)
@@ -38,14 +67,40 @@ namespace LifeInCircle.GameLogic
             debugAngle = angle;
         }
 
+        private void UpdateCharacterView(Vector3 normMoveVector)
+        {
+            if(normMoveVector.x > 0)
+            {
+                trans.localScale = rightScale;
+            }
+            else if(normMoveVector.x < 0)
+            {
+                trans.localScale = leftScale;
+            }
+        }
+
+
+        private GUIStyle guiStyle;
+        private void OnDebugInit()
+        {
+            guiStyle = new GUIStyle();
+            guiStyle.fontSize = 20;
+            GUIUtil.Inst.AddCall(this.DrawGUI);
+        }
+
+        private void DrawGUI()
+        {
+            GUILayout.Label(string.Format("State: {0}", state), guiStyle);
+            GUILayout.Label(string.Format("Norm Move Vector: {0}", debug_moveVector), guiStyle);
+        }
+
         private float debugAngle = 0.0f;
         private Vector3 forward;
-        private void OnGUI()
-        {
-            GUILayout.Label("Angle: " + debugAngle);
-            GUILayout.Label("Forward: " + forward);
-            GUILayout.Label("UP: " + trans.up);
-        }
+        //private void OnGUI()
+        //{
+        //    //GUI.color = Color.red;
+           
+        //}
 
     }
 }
